@@ -97,3 +97,15 @@ list.add(true);
 // Object get(int index) 获取的是从下标，返回的是一个对象
 Object obj = list.get(0); 
 ``` 
+
+-  size：获取元素个数
+``` java
+List list = new ArrayList();
+// 初始化时，list的大小为0
+int size = list.size();
+System.out.println("size = "+size); // 输出为0
+// 添加元素，size会自动增加
+list.add("1");
+int size1 = list.size();
+System.out.println("size1 = "+size1); //输出为1
+```
