@@ -92,9 +92,8 @@ list.add("1"); // 添加元素,本质上存储的是对象 list.add(new String("
 list.add(2); // list.add(new Interge(2));自动装箱功能
 // 增加true对象
 list.add(true);
-// 修改元素前，要记得判断容器大小是不是为空 
-if(list.size()>0){
-    list.set(0,"2"); // 修改第一个元素
-    System.out.println("list = "+list);
-}
+// 容器元素[1,2,true]
+// 获取容器中的元素
+// Object get(int index) 获取的是从下标，返回的是一个对象
+Object obj = list.get(0); 
 ``` 
