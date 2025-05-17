@@ -109,3 +109,11 @@ list.add("1");
 int size1 = list.size();
 System.out.println("size1 = "+size1); //输出为1
 ```
+
+## 三：LinkedList（实现是双端链表，支持增删改查，但是不支持随机访问）
+1：定义：LinkedList是Java集合类中一个很重要的类，它实现了List接口，是链表，可以动态的增删元素。作为ArrayList的补充，因为ArrayList底层使用的数组，再删除一个指定元素的时候效率非常低，时间复杂度为O(n),而LinkedList底层用的链表，删除一个指定元素时间复杂度为O(1)。
+2：常见的成员函数（只能存储泛型，int，char不能直接使用）
+- add：添加元素（增）
+- remove：删除元素（删）
+- set：修改元素 （改）
+- get：获取元素 （查）
