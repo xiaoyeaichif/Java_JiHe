@@ -58,8 +58,42 @@ int idx = Arrays.binarySearch(arr, 5); // 返回 2，这是数组的下标
 2：常见的成员函数（只能存储泛型，int，char不能直接使用）
 
 3：注意：默认构造器(无参构造函数)初始化时数组的容量也为0，一旦加入数据之后，容量扩大到10.之后就以1.5倍固定大小进行扩容。而有参构造器(有参构造函数)初始会给定一个大小size，那么数组的容量就是初始设置的大小size，之后超过size之后再已size的1.5倍进行扩容。
+```Java
+public class test {
+    public static void main(String[] args) {
+        // 扩容机制的验证
+        List list = new ArrayList();
+        //
+        for(int i = 1;i <=10;i++){
+            list.add(i);
+        }
+        // 此时容量为10
+        // 添加元素11-15，此时需要扩容
+        // 扩容大小为10 + (10>>1) = 10+5 = 15
+        for (int i = 11;i <=15;i++){
+            list.add(i);
+        }
+        // 这个过程又需要扩容
+        // 15 + 15 / 2 = 22
+        list.add(100);
+        list.add(200);
+        list.add(null);
+
+        // 有参构造器的验证
+        // 初始容量设置为2，一旦超过2，就进行扩容。
+        List list1 = new ArrayList(2);
+        for(int i = 1;i <=10;i++){
+            list1.add(i);
+        }
+
+        // 需要注意的是，扩容会有拷贝操作，所以要尽可能的减少这个操作，可以给容器初始化一个合适的容量，这样就可以减少扩容的次数，从而提升系统的性能。
+    }
+}
+```
 
 4：扩容之后原数组会被JVM的垃圾回收器进行回收，所以原数组是不能再使用的。
+
+5：常见的成员函数
 - add：添加元素（增）
 ``` java
 List list = new ArrayList();
@@ -122,3 +156,28 @@ System.out.println("size1 = "+size1); //输出为1
 - remove：删除元素（删）
 - set：修改元素 （改）
 - get：获取元素 （查）
+
+## 四：Vector（Vector是一个线程安全的集合类，它实现了List接口，是动态数组，可以动态的增删元素。）
+1：Vector是Java集合中一个类，它实现了List接口，底层也是用数组实现，但是Vector是线程安全的。与ArrayList和LinkedList相比，Vector的效率低于ArrayList和LinkedList。
+
+2：成员函数与其他List基本一致
+
+3：扩容机制，Vector默认构造器下，初始容量为10，并且之后以2倍的大小进行扩容。有参构造器下，初始容量为指定大小size，之后以size的2倍的大小进行扩容。
+```Java
+public class vectorTest {
+    public static void main(String[] args) {
+        /**
+         * 线程安全的集合
+         */
+        // 测试扩容机制（无参构造的形式）
+        List vector = new Vector();
+        // 扩容机制的检验
+        for(int i = 1;i <= 10;i++){
+            vector.add(i);
+        }
+        // 超过10，再次扩容
+        vector.add(100);
+        // 运行完，vector的容量应该为20
+    }
+}
+```
