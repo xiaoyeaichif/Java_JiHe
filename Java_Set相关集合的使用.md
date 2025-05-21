@@ -1,8 +1,9 @@
 # Java常见Set的使用
 
 ## 一：HashSet（是Table + List（或者红黑树）的结构）
-1:定义：HashSet是一个无序的集合，它不保证集合内元素的顺序，并且不允许有重复元素。
+1: 定义：HashSet是一个无序的集合，它不保证集合内元素的顺序，并且不允许有重复元素。
 2：常见的成员函数
+3: 插入时会判断：hashCode() 是否相同；若相同，再通过 equals() 判断两个对象是否“相等”。对于自定义的数据类型，需要重写这两个函数，不然或出现new出来的对象重复出现的问题。
 - add：添加元素（增）
 ```JAVA
 /*
@@ -72,7 +73,7 @@
     System.out.println("set1是否为空:"+p4);
 ```
 
-3: 扩容机制分析
+4: 扩容机制分析
 - HashSet底层使用的是HashMap，而HashMap的扩容机制与负载因子LoadFactor和table有关，另外负载因子的大小为0.75，而table的初始值被设置为DEFAULT_INITIAL_CAPACITY，并且该值的大小为16，也就是说一开始创建一个Set的容量为16。下面是Idea的验证。
 ``` Java
 // add函数再进行插入操作的时候，会调用到HashMap的putVal函数，然后来执行扩容的操作。
@@ -138,7 +139,7 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
     }
 ```
 
-- 扩容验证（扩容是指HashSet中只要有12个对象就进行扩容，不管是Table + List中的节点超过12，还是单独List节点超过12）
+- 5：扩容验证（扩容是指HashSet中只要有12个对象就进行扩容，不管是Table + List中的节点超过12，还是单独List节点超过12）
 ```Java
 public class kuoRongTest {
     public static void main(String[] args) {
@@ -152,4 +153,59 @@ public class kuoRongTest {
 ![alt text](image.png)
 ![alt text](image-1.png)
 // 可以看到进行了扩容
+```
+
+- 6：插入自定义对象检查是否重复（一旦没有重写hashcode和equals方法，就会认为两个对象是不同的）
+```Java
+public class kuoRongTest {
+        public static void main(String[] args) {
+            Set hashset = new HashSet<>();
+            hashset.add(new Person(12));
+            hashset.add(new Person(12));
+            // hashset = [com.hanzhoudian.SetTest.Person@41629346, com.hanzhoudian.SetTest.Person@3b07d329]
+            // 表示两个对象都在hashset中
+            System.out.println("hashset = " + hashset);
+            System.out.println(hashset.size()); // 输出为2，表示两个对象都插入进hashset中
+        }
+}
+class Person{
+    private int age;
+
+    public Person(int age) {
+        this.age = age;
+    }
+}
+
+// 修改版本，重写hashcode和equal函数
+public class kuoRongTest {
+        public static void main(String[] args) {
+            Set hashset = new HashSet<>();
+            hashset.add(new Person(12));
+            hashset.add(new Person(12));
+            // hashset = [com.hanzhoudian.SetTest.Person@2b]
+            // 表示只有一个对象都在hashset中
+            System.out.println("hashset = " + hashset);
+            System.out.println(hashset.size()); // 输出为1，表示一个对象都插入进hashset中
+        }
+}
+// 这个版本用age作为唯一标识，所以hashset中只能有一个对象，因为hashset中不允许有重复的元素
+class Person{
+    private int age;
+    public Person(int age) {
+        this.age = age;
+    }
+
+    @Override
+    public  int hashCode(){
+        return Objects.hash(age); // //表示使用age进行hash计算
+    }
+
+    @Override
+    // 用age作为equal的参数
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Person person = (Person) o;
+        return age == person.age;
+    }
+}
 ```
