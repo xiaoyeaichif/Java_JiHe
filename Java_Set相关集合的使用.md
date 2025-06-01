@@ -245,7 +245,7 @@ final Node<K,V>[] resize() {
     }
 ```
 
-- 5：扩容验证（扩容是指HashSet中只要有12个对象就进行扩容，不管是Table + List中的节点超过12，还是单独List节点超过12）
+- 5：扩容验证（扩容是指HashSet中只要有12个对象就进行扩容，不管是Table + List中的节点超过12，还是单独List节点超过12，应该关注size的变化，只要size > 12 就会进行扩容）
   
 ```Java
 public class kuoRongTest {
