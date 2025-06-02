@@ -110,6 +110,13 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
             //  p = tab[i = (n - 1) & hash]，也就是说p指向的是发生冲突的第一个元素（桶table上的元素）
             // （1）准备加入的对象hash值和key值都和p指向的元素hash值和key值都相同
             // （2）准备加入的对象hash值和p相同并且使用equals方法比较key值相同（针对程序员自己写的equals方法实现）
+            //  最重要的就是判断key值是否相同，满足这两个条件就行
+            /*
+                    | 条件                 | 描述             |
+                    | ------------------ | -------------- |
+                    | `hashCode()` 相同    | 分到同一个桶         |
+                    | `equals()` 返回 true | 是“逻辑上”的同一个 key |
+            */
             // 此时不能加入当前对象
             if (p.hash == hash && 
                 ((k = p.key) == key || (key != null && key.equals(k))))
@@ -142,9 +149,18 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
                     p = e;
                 }
             }
+            // 这里代表链表中已经存在了key相同的对象，此时需要判断是否需要更新value值
             if (e != null) { // existing mapping for key
+                // 保存当前 key 对应的旧值，以便函数最后返回它（符合 Map.put() 语义：返回旧值）。
                 V oldValue = e.value;
+                /*
+                - `onlyIfAbsent` 是 `putIfAbsent()` 专用的一个布尔参数。
+                - 如果是普通的 `put()`，这个值是 `false`，意味着无论如何都要覆盖旧值。
+                - 如果是 `putIfAbsent()`，这个值是 `true`，表示：**只有当旧值为 null 时才插入新值。**
+                */
+               // 或者旧值不为空 ，则更新value值
                 if (!onlyIfAbsent || oldValue == null)
+                    // 更新value值
                     e.value = value;
                 afterNodeAccess(e);
                 return oldValue;
@@ -168,12 +184,15 @@ final Node<K,V>[] resize() {
         int oldThr = threshold;
         int newCap, newThr = 0;
         if (oldCap > 0) {
+            // 只要容量超过2^30时，后续就不会再进行扩容
+            // 把扩容阈值 threshold 设置成 Integer.MAX_VALUE，表示永远不会再触发扩容
             if (oldCap >= MAXIMUM_CAPACITY) {
-                threshold = Integer.MAX_VALUE;
+                threshold = Integer.MAX_VALUE; //HashMap 允许的最大容量，等于 2^30
                 return oldTab;
             }
+            // 如果旧容量小于2^30，则进行扩容
             else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&
-                     oldCap >= DEFAULT_INITIAL_CAPACITY)
+                     oldCap >= DEFAULT_INITIAL_CAPACITY)//默认初始容量，等于 16
                 newThr = oldThr << 1; // double threshold
         }
         else if (oldThr > 0) // initial capacity was placed in threshold
@@ -316,4 +335,110 @@ class Person{
         return age == person.age;
     }
 }
+```
+
+## 二：LinkedHashSet(table + 双向链表)
+
+### 1：与 HashSet的区别
+
+| 特性   | `HashSet`                   | `LinkedHashSet`               |
+| ---- | --------------------------- | ----------------------------- |
+| 元素顺序 | **不保证顺序**（存进去的顺序和取出来的不一定一样） | **保持插入顺序**（谁先加的，谁先遍历）         |
+| 内存占用 | 较少                          | 略高（需要额外维护顺序）                  |
+| 底层实现 | 基于 `HashMap<K, Object>`     | 基于 `LinkedHashMap<K, Object>`|
+| 遍历结果 | 无序                          | 有序（按插入顺序）                     |
+| 性能   | 略快                          | 略慢（要维护双向链表）                   |
+
+### 2：💡 示例对比
+
+```java
+Set<String> hashSet = new HashSet<>();
+hashSet.add("C");
+hashSet.add("A");
+hashSet.add("B");
+System.out.println(hashSet); // 可能是 [A, C, B]（无序）
+
+Set<String> linkedHashSet = new LinkedHashSet<>();
+linkedHashSet.add("C");
+linkedHashSet.add("A");
+linkedHashSet.add("B");
+System.out.println(linkedHashSet); // 输出：[C, A, B]（保持插入顺序）
+```
+
+### 三：扩容机制的补充
+
+#### 1：桶扩容机制（table的扩容）
+
+- 桶扩容机制：当桶的容量达到阈值的0.75时，会进行扩容。负载因子DEFAULT_LOAD_FACTOR = 0.75。
+
+- 初始时刻，集合容量为0，插入第一个对象时，容量变成16。后续再加入元素时，只要到达初始容量16的0.75就会扩容。容量变为32，此时集合容量为32，插入元素时，只要达到32的0.75就会扩容。容量变为64，此时集合容量为64，插入元素时，只要达到64的0.75就会扩容。容量变为128，此时集合容量为128，插入元素时，只要达到128的0.75就会扩容。以此类推。
+  
+- 1：table扩容机制举例
+
+```Java
+public class TableTest {
+    public static void main(String[] args) {
+        HashMap<Object, Object> hashMap = new HashMap<>();
+        for(int i = 1;i <= 36;i++){
+            hashMap.put(i,"hello");
+        }
+        System.out.println("hashMap的大小: " + hashMap.size()); // 输出大小为36
+
+    }
+}
+/**
+ * 
+ *  1：当i = 1时，hashMap中有一个元素，此时将容量设置为16!
+ *  具体如图所示：[alt text](image-2.png)
+ * 
+ *  2：当i = 13时，hashMap中有12个元素，也就是超过16*0.75，此时将容量设置为32!
+ *  具体如图所示：![alt text](image-3.png)
+ * 
+ *  3：当i = 25时，hashMap中有24个元素，也就是超过32*0.75，此时将容量设置为64!
+ *  具体如图所示：![alt text](image-4.png)
+ * /
+```
+
+- 2：table挂载的链表进行扩容测试，并且需要注意树化的时机。树化需要满足table >= 64 && 链表上挂载的元素超过8个。不然优先对table进行扩容。
+
+```Java
+public class TreeKuorongTest {
+    public static void main(String[] args)
+    {
+        // 测试HashMap
+        HashMap hashMap = new HashMap<>();
+        for (int i = 1; i <= 12 ; i++) {
+            hashMap.put(new Person(i), "hello");
+        }
+        System.out.println("hashMap的大小: " + hashMap.size());
+        System.out.println("hashMap: " + hashMap);
+    }
+}
+
+class Person{
+    private int num;
+    public Person(int num) {
+        this.num = num;
+    }
+
+    @Override
+    // Hash值设置的一样，也就是全部的元素挂载在一条链表上
+    public int hashCode() {
+        return 100;
+    }
+}
+/**
+ * 1：当 i = 9时，其实已经满足链表扩容的机制，但是此时容量为16，还未到达64，则优先对table进行扩容到32。
+ * 具体的变化如图所示：![alt text](image-5.png)
+ * 
+ * 2：当 i = 10时，继续对table进行扩容，扩容到64.
+ * 具体的变化如图所示：![alt text](image-6.png)
+ * 
+ * 3：当 i = 11时，不会再对table进行扩容，因为此时已经满足table >= 64 && 链表上的元素大于8个。
+ * 具体的变化如图所示![alt text](image-7.png)，![alt text](image-8.png)
+ * 
+ * 
+ * 
+ * 
+ * /
 ```
